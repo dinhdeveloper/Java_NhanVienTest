@@ -15,7 +15,7 @@ CREATE PROC insertDataAcc
 AS
 BEGIN
 
-INSERT INTO Account(AccFullName,AccBirthDay,Accgender)
+INSERT INTO Account(AccFullName,AccBirthDay,AccGender)
 VALUES(@NAME,@AGE,@GENDER)
 END
 GO
@@ -27,7 +27,7 @@ CREATE PROC updateDataAcc
 @ID int
 AS BEGIN
 UPDATE Account
-SET AccFullName = @NAME, AccBirthDay = @DOB, Accgender = @GENDER WHERE AccId = @ID
+SET AccFullName = @NAME, AccBirthDay = @DOB, AccGender = @GENDER WHERE AccId = @ID
 END
 GO
 

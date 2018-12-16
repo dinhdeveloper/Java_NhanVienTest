@@ -24,7 +24,7 @@ public class NhanVienDao {
                 nv.setHoTen(rs.getString("AccFullName"));
                 nv.setNgaySinh(rs.getDate("AccBirthDay"));
 //                SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
-                nv.setGioiTinh(rs.getBoolean("Accgender"));
+                nv.setGioiTinh(rs.getBoolean("AccGender"));
                 list.add(nv);
             }
 

@@ -24,10 +24,12 @@ import java.util.logging.Logger;
 import javax.swing.DefaultRowSorter;
 import javax.swing.JOptionPane;
 import javax.swing.RowFilter;
+import javax.swing.RowSorter;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 /**
  *
@@ -243,6 +245,7 @@ public class Main extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        jTable1.setName("table"); // NOI18N
         jTable1.addAncestorListener(new javax.swing.event.AncestorListener() {
             public void ancestorMoved(javax.swing.event.AncestorEvent evt) {
             }
@@ -261,8 +264,8 @@ public class Main extends javax.swing.JFrame {
 
         txtSearch.setFont(new java.awt.Font("Times New Roman", 1, 17)); // NOI18N
         txtSearch.setForeground(new java.awt.Color(204, 204, 204));
-        txtSearch.setText("Nhập ID để tìm kiếm");
-        txtSearch.setToolTipText("Nhập ID để tìm kiếm");
+        txtSearch.setText("Nhập để tìm kiếm");
+        txtSearch.setToolTipText("Nhập để tìm kiếm");
         txtSearch.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
@@ -403,16 +406,22 @@ public class Main extends javax.swing.JFrame {
     }//GEN-LAST:event_jTable1AncestorAdded
 
     private void btnThemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnThemActionPerformed
-        if (txtHoTen.getText().equals("") || txtNgaySinh.getDate().equals("") || jraNu.getText().equals("") || jraNam.getText().equals("")) {
+        if (txtHoTen.getText().equals("") || (txtNgaySinh.getDate() == null)) {
             JOptionPane.showMessageDialog(null, "Nhập đủ thông tin");
+            txtHoTen.requestFocus(); // Con trỏ trỏ lại chổ textfield họ tên
         } else {
             try (Connection conn = DriverManager.getConnection(Connected.ConnectSQL());
                     PreparedStatement ps = conn.prepareCall("{call insertDataAcc(?,?,?)}")) {
                 ps.setString(1, txtHoTen.getText());
                 ps.setString(2, new SimpleDateFormat("yyyy-MM-dd").format(txtNgaySinh.getDate()));
-                ps.setBoolean(3, gender);
-                ps.executeUpdate();
-                JOptionPane.showMessageDialog(null, "Thêm Thành Công");
+                if (jraNu.isSelected() == false) {
+                    JOptionPane.showMessageDialog(null, "Hãy chọn giới tính");
+                    txtHoTen.requestFocus();
+                } else {
+                    ps.setBoolean(3, gender);
+                    ps.executeUpdate();
+                    JOptionPane.showMessageDialog(null, "Thêm Thành Công");
+                }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage(), "ERROR",
                         JOptionPane.ERROR_MESSAGE);
@@ -477,9 +486,9 @@ public class Main extends javax.swing.JFrame {
             Date date = new SimpleDateFormat("MMM-d,yyyy").parse((String) model.getValueAt(i, 2));
             txtNgaySinh.setDate(date);
             String sex = model.getValueAt(i, 3).toString();
-            if (sex.trim().equals("Nam") || sex.trim().equals("nam")) {
+            if (sex.trim().equals("Nam")) {
                 jraNam.setSelected(true);
-            } else if (sex.trim().equals("Nữ") || sex.trim().equals("Nu") || sex.trim().equals("nu") || sex.trim().equals("nữ")) {
+            } else if (sex.trim().equals("Nữ")) {
                 jraNu.setSelected(true);
             }
         } catch (ParseException ex) {
@@ -499,46 +508,47 @@ public class Main extends javax.swing.JFrame {
 
     private void txtSearchKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchKeyReleased
         if (txtSearch.getText().isEmpty()) {
-            setTestfield();
             getData();
         } else {
-            try (Connection conn = DriverManager.getConnection(Connected.ConnectSQL());
-                    PreparedStatement pst = conn.prepareCall("{call TimKiem(?)}")) {
-                pst.setString(1, txtSearch.getText());
-                ResultSet rs = pst.executeQuery();
-                while (rs.next()) {
-                    String setid = rs.getString("AccId");
-                    txtMaNV.setText(setid);
-                    String setname = rs.getString("AccFullName");
-                    txtHoTen.setText(setname);
-                    Date setdate = rs.getDate("AccBirthDay");
-                    txtNgaySinh.setDate(setdate);
-                    String sex = rs.getString("AccGender");
-                    if (sex.trim().equals("1")) {
-                        jraNam.setSelected(true);
-                    } else if (sex.trim().equals("0")) {
-                        jraNu.setSelected(true);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-//            DefaultTableModel model = new DefaultTableModel();
-//            model.addColumn("Mã Nhân Viên");
-//            model.addColumn("Họ Tên");
-//            model.addColumn("Ngày Sinh");
-//            model.addColumn("Giới Tính");
-//            jTable1.setModel(model);
-//            String str = txtSearch.getText();
-//            DefaultRowSorter<?, ?> sorter = (DefaultRowSorter<?, ?>) jTable1.getRowSorter();
-//            sorter.setRowFilter(RowFilter.regexFilter(str));
-//            sorter.setSortKeys(null);
+//            Tìm theo Id và đưa vào textField
+//            try (Connection conn = DriverManager.getConnection(Connected.ConnectSQL());
+//                    PreparedStatement pst = conn.prepareCall("{call TimKiem(?)}")) {
+//                pst.setString(1, txtSearch.getText());
+//                ResultSet rs = pst.executeQuery();
+//                while (rs.next()) {
+//                    String setid = rs.getString("AccId");
+//                    txtMaNV.setText(setid);
+//                    String setname = rs.getString("AccFullName");
+//                    txtHoTen.setText(setname);
+//                    Date setdate = rs.getDate("AccBirthDay");
+//                    txtNgaySinh.setDate(setdate);
+//                    String sex = rs.getString("AccGender");
+//                    if (sex.trim().equals("1")) {
+//                        jraNam.setSelected(true);
+//                    } else if (sex.trim().equals("0")) {
+//                        jraNu.setSelected(true);
+//                    }
+//                }
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+            DefaultTableModel model = new DefaultTableModel();
+            model.addColumn("Mã Nhân Viên");
+            model.addColumn("Họ Tên");
+            model.addColumn("Ngày Sinh");
+            model.addColumn("Giới Tính");
+            String str = txtSearch.getText();
+            jTable1.setAutoCreateRowSorter(true);
+            DefaultRowSorter<?, ?> sorter = (DefaultRowSorter<?, ?>) jTable1.getRowSorter();
+            sorter.setRowFilter(RowFilter.regexFilter(str));
+            sorter.setSortKeys(null);
+            jTable1.setRowSorter((RowSorter<? extends TableModel>) sorter);
         }
     }//GEN-LAST:event_txtSearchKeyReleased
 
     private void txtSearchFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtSearchFocusGained
         //Đổi màu của chữ hiện trên thanh search và ẩn nó khi click chuột vào
-        if (txtSearch.getText().equals("Nhập ID để tìm kiếm")) {
+        if (txtSearch.getText().equals("Nhập để tìm kiếm")) {
             txtSearch.setText("");
         }
         txtSearch.setForeground(Color.BLACK);
@@ -547,7 +557,7 @@ public class Main extends javax.swing.JFrame {
     private void txtSearchFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtSearchFocusLost
         //Đổi màu của chữ hiện trên thanh search và ẩn nó khi thoát chuột ra
         if (txtSearch.getText().equals("")) {
-            txtSearch.setText("Nhập ID để tìm kiếm");
+            txtSearch.setText("Nhập để tìm kiếm");
         }
         //[204,204,204]
         txtSearch.setForeground(new Color(204, 204, 204));
@@ -555,10 +565,10 @@ public class Main extends javax.swing.JFrame {
 
     private void txtSearchKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchKeyTyped
         //Không cho nhập chữ
-        char vchar = evt.getKeyChar();
-        if (!(Character.isDigit(vchar))) {
-            evt.consume();
-        }
+//        char vchar = evt.getKeyChar();
+//        if (!(Character.isDigit(vchar))) {
+//            evt.consume();
+//        }
     }//GEN-LAST:event_txtSearchKeyTyped
 
     /**
